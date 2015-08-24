@@ -24,6 +24,8 @@ To disable compiler optimisations, edit
 <MPIDE_folder>/hardware/pic32/platforms.txt and replace all instances of '-O3'
 with '-O0'.
 
+Update: for MPIDE 0023, replace all instances of '-O2' and '-Os' with '-O0'.
+
 
 USAGE INSTRUCTIONS
 
