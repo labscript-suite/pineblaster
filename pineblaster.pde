@@ -22,42 +22,28 @@
 //byte ip[] = { 192,168,1, 177 };
 //Server server(8000);
 
-const unsigned int max_instructions = 15000;
+const unsigned int max_instructions = 7450;
 int autostart;
-volatile int reset_on_serial = 0;
+//volatile int reset_on_serial = 0;
 unsigned int instructions[2*max_instructions + 2];
 volatile unsigned int * resume_address = instructions;
 
 char readstring[256] = "";
 
-void __attribute__((naked, at_vector(3), nomips16)) ExtInt0Handler(void){
-  // This interrupt is called when a hardware trigger goes high to start the run.
-  // set Status to acknowledge that we're starting the interrupt handler:
-  asm volatile ("mtc0 $k0, $12\n\t");
-  // set IPC0 so as to disable this interrupt from occuring again:
-  asm volatile ("sw $zero, 0($t6)\n\t");
-  // Write to IFSO to indicate that the interrupt has been handled:
-  asm volatile ("sw $v1, 0($v0)\n\t");
-  // set Status to indicate the end of the interrupt handler:
-  asm volatile ("mtc0 $k1, $12\n\t");
-  // return:
-  asm volatile ("eret\n\t");
-}
-
-void __attribute__((naked, at_vector(24), nomips16)) IntSer0Handler(void){
-  // This interrupt is called whenever serial communication arrives. We
-  // intercept it and decide whether to treat it as ordinary serial communication,
-  // or as an abort signal (for when the sequence is running). In the case of an abort signal,
-  // we can reset the CPU.
-  // Load in the address of reset_on_serial:
-  asm volatile ("la $k0, reset_on_serial\n\t");
-  // load in the value of reset_on_serial:
-  asm volatile ("lw $k0, 0($k0)\n\t");
-  // if it's zero, do the usual serial handler:
-  asm volatile ("beq $k0, $zero, IntSer0Handler\n\t");
-  // Otherwise, do a reset! (jump to the below function)
-  asm volatile ("j reset\n\t");
-}
+//void __attribute__((naked, at_vector(24), nomips16)) IntSer0Handler(void){
+//  // This interrupt is called whenever serial communication arrives. We
+//  // intercept it and decide whether to treat it as ordinary serial communication,
+//  // or as an abort signal (for when the sequence is running). In the case of an abort signal,
+//  // we can reset the CPU.
+//  // Load in the address of reset_on_serial:
+//  asm volatile ("la $k0, reset_on_serial\n\t");
+//  // load in the value of reset_on_serial:
+//  asm volatile ("lw $k0, 0($k0)\n\t");
+//  // if it's zero, do the usual serial handler:
+//  asm volatile ("beq $k0, $zero, IntSer0Handler\n\t");
+//  // Otherwise, do a reset! (jump to the below function)
+//  asm volatile ("j reset\n\t");
+//}
 
 void __attribute__((naked, nomips16)) Reset(void){
   // does a software reset of the CPU:
@@ -83,7 +69,7 @@ void __attribute__((naked, nomips16)) Reset(void){
 void start(){
   Serial.println("ok");
   // Any serial communication will now reset the CPU:
-  reset_on_serial = 1;
+  //reset_on_serial = 1;
   int incomplete = 1;
   while (incomplete==1){
     run();
@@ -91,7 +77,7 @@ void start(){
     incomplete = (uint)resume_address != (uint)instructions;
   }
   // no longer reset on serial communication:
-  reset_on_serial = 0;
+  //reset_on_serial = 0;
   // say that we're done!
   Serial.println("done");
 }
@@ -149,13 +135,21 @@ void run(){
   
   // otherwise, wait for it...
   asm volatile ("wait\n\t");
-   
+  
+  // once the wait is complete, detach the interrupt so future triggers do not 
+  // slow down the execution
+  detachInterrupt(0); 
+  // required nop because the asm for the detachInterrupt has a jump, which 
+  // seems to execute the following asm instruction before jumping (much like
+  // the branch instructions do. This nop ensures nothing critical starts 
+  // before the detachment is finished
+  asm volatile ("nop\n\t");
+  
   // We need to get up to the right part of the waveform, we don't want the initial digital low.
   // We want to start with a digital high. So let's set the period to some small constant, and wait
   // until it is about to go high, switching the period to our first instruction at just the right moment:
   asm volatile ("start: sw $t8, 0($t0)\n\t"); 
   asm volatile ("sw $t8, 0($t1)\n\t");
-  asm volatile ("nop\n\t");
 
   // update the period of the output:
   asm volatile ("top: sw $t3, 0($t0)\n\t"); 
