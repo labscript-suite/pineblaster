@@ -24,26 +24,10 @@
 
 const unsigned int max_instructions = 7450;
 int autostart;
-//volatile int reset_on_serial = 0;
 unsigned int instructions[2*max_instructions + 2];
 volatile unsigned int * resume_address = instructions;
 
 char readstring[256] = "";
-
-//void __attribute__((naked, at_vector(24), nomips16)) IntSer0Handler(void){
-//  // This interrupt is called whenever serial communication arrives. We
-//  // intercept it and decide whether to treat it as ordinary serial communication,
-//  // or as an abort signal (for when the sequence is running). In the case of an abort signal,
-//  // we can reset the CPU.
-//  // Load in the address of reset_on_serial:
-//  asm volatile ("la $k0, reset_on_serial\n\t");
-//  // load in the value of reset_on_serial:
-//  asm volatile ("lw $k0, 0($k0)\n\t");
-//  // if it's zero, do the usual serial handler:
-//  asm volatile ("beq $k0, $zero, IntSer0Handler\n\t");
-//  // Otherwise, do a reset! (jump to the below function)
-//  asm volatile ("j reset\n\t");
-//}
 
 void __attribute__((naked, nomips16)) Reset(void){
   // does a software reset of the CPU:
@@ -66,10 +50,15 @@ void __attribute__((naked, nomips16)) Reset(void){
   asm volatile ("seeya: j seeya");
 }
 
+void serialInterruptDuringRun(int ch){
+  asm volatile ("j reset\n\t"); 
+}
+
 void start(){
   Serial.println("ok");
   // Any serial communication will now reset the CPU:
-  //reset_on_serial = 1;
+  Serial.attachInterrupt(serialInterruptDuringRun);
+  
   int incomplete = 1;
   while (incomplete==1){
     run();
@@ -77,7 +66,7 @@ void start(){
     incomplete = (uint)resume_address != (uint)instructions;
   }
   // no longer reset on serial communication:
-  //reset_on_serial = 0;
+  Serial.detachInterrupt();
   // say that we're done!
   Serial.println("done");
 }
