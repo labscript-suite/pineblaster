@@ -10,21 +10,29 @@ serial connection.
 
 SETUP INSTRUCTIONS
 
-Use MPIDE (available on the ChipKIT github) to compile and upload the code
+Use MPIDE (available on the ChipKIT github or from https://chipkit.s3.amazonaws.com/index.html) to compile and upload the code
 (pineblaster.pde) to the ChipKIT MAX32.
 
-Tested on MPIDE 0022 - 2011.12.14.
-
+Tested on:
+ * MPIDE 0022 - 2011.12.14.
+ * MPIDE 0023 - 2012.09.03.
+ 
+Newer versions of MPIDE are not supported (there may be updated code in a branch of the pineblaster bitbucket repository, but these will not necessarily maintain the same specifications as published in our paper)
+ 
 One modification is required: compiler optimisations must be disabled. This is
 required so that the compiler doesn't produce unpredictable code, or multiple
 code paths for the same bit of source code. So we do this to ensure our code
 is deterministic.
 
 To disable compiler optimisations, edit
-<MPIDE_folder>/hardware/pic32/platforms.txt and replace all instances of '-O3'
-with '-O0'.
+<MPIDE_folder>/hardware/pic32/platforms.txt and replace all instances of:
+ * '-O3' with '-O0'
+ * '-O2' with '-O0'
+ * '-Os' with '-O0'
 
-Update: for MPIDE 0023, replace all instances of '-O2' and '-Os' with '-O0'.
+You must restart MPIDE after changing platforms.txt.
+
+Remember to select the correct board (Tools->Board->ChipKIT MAX32) and serial port in the MPIDE software, before compiling and uploading the program.
 
 
 USAGE INSTRUCTIONS
