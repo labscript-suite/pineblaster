@@ -1,3 +1,13 @@
+#####################
+# Please Read first #
+#####################
+
+The ChipKIT Max32 board is no longer commercially available. As such, this device is considered deprecated.
+
+Please consider using the PrawnBlaster (https://github.com/labscript-suite/PrawnBlaster) as a successor to the PineBlaster. The required development board is cheaper (~$5) and the PrawnBlaster supports more instructions, shorter clock pulses, an internal wait monitor, can be more easily externally referenced, and precompiled firmware is available.
+
+#####################
+
 The PineBlaster is a microcontroller-based pseudoclock, built on the Digilent
 chipKIT Max32™ Prototyping Platform. It provides for programmable pulse
 sequences. It supports up to 15000 instructions, pulse periods between 50ns
